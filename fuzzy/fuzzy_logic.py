@@ -125,15 +125,19 @@ class FuzzyCarController:
 
         rules_strength = []
 
-        # Red rule
-        rules_strength.append(light_mf['red'])
+        #  RED
+        rules_strength.append(AND(light_mf['red'], distance_mf['far']))
+        rules_strength.append(AND(light_mf['red'], distance_mf['medium']))
+        rules_strength.append(AND(light_mf['red'], distance_mf['close']))
+        rules_strength.append(AND(light_mf['red'], road_mf['wet']))
 
-        # Yellow rules
+        #  YELLOW
         rules_strength.append(AND(light_mf['yellow'], distance_mf['close']))
-        rules_strength.append(AND(light_mf['yellow'], distance_mf['medium']))
-        rules_strength.append(AND(light_mf['yellow'], distance_mf['far']))
+        rules_strength.append(AND3(light_mf['yellow'], distance_mf['medium'], road_mf['wet']))
+        rules_strength.append(AND3(light_mf['yellow'], distance_mf['medium'], road_mf['normal']))
+        rules_strength.append(AND3(light_mf['yellow'], distance_mf['far'], road_mf['dry']))
 
-        # Green rules
+        #  GREEN
         rules_strength.append(AND(light_mf['green'], distance_mf['close']))
         rules_strength.append(AND3(light_mf['green'], distance_mf['medium'], road_mf['wet']))
         rules_strength.append(AND3(light_mf['green'], distance_mf['medium'], road_mf['normal']))
@@ -142,6 +146,13 @@ class FuzzyCarController:
         rules_strength.append(AND3(light_mf['green'], distance_mf['far'], road_mf['normal']))
         rules_strength.append(AND3(light_mf['green'], distance_mf['far'], road_mf['dry']))
 
+        # 🌧 OVERRIDES
+        rules_strength.append(AND(road_mf['wet'], distance_mf['close']))
+        rules_strength.append(AND(road_mf['wet'], distance_mf['medium']))
+
+        # DEFAULT
+        rules_strength.append(distance_mf['medium'])
+        
         # =========================
         # Output MF activation
         # =========================

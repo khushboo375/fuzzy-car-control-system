@@ -156,7 +156,7 @@ def main():
 
     gauge = Speedometer(WIDTH // 2, HEIGHT // 2)
 
-    # 👉 Move dashboard LOWER (fix overlap)
+    #  Move dashboard LOWER (fix overlap)
     dashboard = Dashboard(WIDTH // 2 - 150, HEIGHT - 60, 300)
 
     engine_sound = pygame.mixer.Sound("assets/sounds/engine.wav")
@@ -222,7 +222,7 @@ def main():
         if road <= 2:
             rain.draw(screen)
 
-        # 🌙 Headlights
+        #  Headlights
         if is_night:
             draw_headlights(screen, player_car.x, player_car.y)
 
@@ -286,13 +286,19 @@ def main():
         draw_rules_panel(
             screen,
             WIDTH - RIGHT_PANEL_WIDTH + 10,
-            60,
+            80,
             result["rule_strengths"]
         )
 
         active_rules = sum(1 for r in result["rule_strengths"] if r > 0.01)
+        rules_start_y = 60
+        rule_height = 32
+        num_rules_displayed = min(len(result["rule_strengths"]), 12)
+
+        active_rules_y = rules_start_y + num_rules_displayed * rule_height + 20
+
         draw_text(f"Active Rules: {active_rules}", 14,
-                  WIDTH - RIGHT_PANEL_WIDTH + 20, 380)
+                WIDTH - RIGHT_PANEL_WIDTH + 20, active_rules_y)
 
         pygame.display.flip()
 
