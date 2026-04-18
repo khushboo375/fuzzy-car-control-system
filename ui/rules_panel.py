@@ -2,34 +2,20 @@ import pygame
 
 
 RULE_TEXTS = [
-
-    #  RED
-    "IF red AND far → slow",
-    "IF red AND medium → slow",
-    "IF red AND close → slow",
-    "IF red AND wet → slow",
-
-    #  YELLOW
-    "IF yellow AND close → slow",
-    "IF yellow AND medium AND wet → slow",
-    "IF yellow AND medium AND normal → medium",
-    "IF yellow AND far AND dry → medium",
-
-    #  GREEN
-    "IF green AND close → slow",
-    "IF green AND medium AND wet → slow",
-    "IF green AND medium AND normal → medium",
-    "IF green AND medium AND dry → medium",
-    "IF green AND far AND wet → medium",
-    "IF green AND far AND normal → fast",
-    "IF green AND far AND dry → fast",
-
-    # 🌧 OVERRIDES
-    "IF wet AND close → slow",
-    "IF wet AND medium → medium",
-
-    # DEFAULT
-    "IF medium → medium"
+    "RED → slow",
+    "YELLOW + close → slow",
+    "YELLOW + medium → medium",
+    "YELLOW + far → medium",
+    "GREEN + close → slow",
+    "GREEN + medium + wet → slow",
+    "GREEN + medium + normal → medium",
+    "GREEN + medium + dry → medium",
+    "GREEN + far + wet → medium",
+    "GREEN + far + normal → fast",
+    "GREEN + far + dry → fast",
+    "School Zone → slow",
+    "City + far → medium",
+    "Highway + far → fast"
 ]
 
 def draw_rules_panel(screen, x, y, strengths):

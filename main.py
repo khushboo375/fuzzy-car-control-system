@@ -11,6 +11,7 @@ from simulation.car import Car, FrontCar
 from simulation.rain import Rain
 from ui.dashboard import Dashboard
 from utils.logger import DataLogger
+from simulation.fuel import FuelSystem
 
 pygame.init()
 pygame.mixer.init()
@@ -27,7 +28,8 @@ road = 5
 smooth_speed = 60
 is_night = False  
 light = 8
-
+speed_limit=80
+fuel_system = None
 
 # =========================
 # DRAW FUNCTIONS
@@ -78,7 +80,7 @@ def draw_headlights(screen, car_x, car_y):
 # INPUT
 # =========================
 def handle_input():
-    global distance, road
+    global distance, road,light, speed_limit
 
     keys = pygame.key.get_pressed()
 
@@ -101,6 +103,16 @@ def handle_input():
         light = 5   # yellow
     if keys[pygame.K_g]:
         light = 9   # green
+    
+    if keys[pygame.K_1]:
+        speed_limit = 40   # School
+    if keys[pygame.K_2]:
+        speed_limit = 70   # City
+    if keys[pygame.K_3]:
+        speed_limit = 110  # Highway
+
+    if keys[pygame.K_f]:
+        fuel_system.fuel = 100
 
 def draw_mini_signal(screen, x, y, light):
     # Background box
@@ -167,6 +179,9 @@ def main():
 
     logger = DataLogger()
 
+    fuel_system = FuelSystem()
+
+
     while running:
         clock.tick(60)
         dashboard.update(smooth_speed)
@@ -175,17 +190,19 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-            # 🌙 Toggle day/night
+            #  Toggle day/night
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_t:
                     is_night = not is_night
 
         handle_input()
 
-        result = controller.compute(distance, road, light)
+        result = controller.compute(distance, road, light, speed_limit)
         target_speed = result["speed"]
 
         smooth_speed += (target_speed - smooth_speed) * 0.1
+
+        fuel_system.update(smooth_speed)
 
         logger.log(distance, road, light, smooth_speed)
         
@@ -213,6 +230,8 @@ def main():
         # =========================
         draw_layout()
 
+        fuel = fuel_system.get_fuel()
+
         # Simulation
         road_sim.draw(screen)
         front_car.draw(screen, distance)
@@ -228,23 +247,31 @@ def main():
 
         # LEFT PANEL
         draw_text("INPUTS", 18, 20, 20)
-        draw_text(f"Distance: {int(distance)} m", 16, 20, 70)
+
+        draw_text(f"Distance: {int(distance)} m", 16, 20, 60)
 
         road_label = "Wet" if road <= 2 else "Normal" if road <= 7 else "Dry"
-        draw_text(f"Road: {road_label}", 16, 20, 110)
-        draw_text("Signal:", 16, 20, 140)
-        draw_mini_signal(screen, 200, 135, light)
+        draw_text(f"Road: {road_label}", 16, 20, 90)
 
-        draw_text("Controls:", 14, 20, 160)
-        draw_text("UP/DOWN → Distance", 12, 20, 190)
-        draw_text("W/N/D → Road", 12, 20, 210)
-        draw_text("T → Day/Night", 12, 20, 230)
-        draw_text("R/Y/G → Signal", 12, 20, 250)
+        draw_text("Signal:", 16, 20, 120)
+        draw_mini_signal(screen, 200, 115, light)
 
-        draw_membership_panel(screen, 20, 300,
+        # Speed limit
+        draw_text(f"Speed Limit: {speed_limit} km/h", 16, 20, 160)
+        draw_text("1/2/3 → Speed Limit", 12, 20, 185)
+
+        # Controls (proper spacing)
+        draw_text("Controls:", 14, 20, 220)
+        draw_text("UP/DOWN → Distance", 12, 20, 245)
+        draw_text("W/N/D → Road", 12, 20, 265)
+        draw_text("R/Y/G → Signal", 12, 20, 285)
+        draw_text("T → Day/Night", 12, 20, 305)
+
+        # Membership panels (pushed down)
+        draw_membership_panel(screen, 20, 340,
             result["distance_mf"], "Distance Membership")
 
-        draw_membership_panel(screen, 20, 420,
+        draw_membership_panel(screen, 20, 470,
             result["road_mf"], "Road Membership")
 
         # CENTER PANEL
@@ -258,7 +285,6 @@ def main():
                   WIDTH // 2 - 20, HEIGHT // 2 + 20)
 
         #  Dashboard (now BELOW car)
-        dashboard.draw_speed_graph(screen)
         dashboard.draw_distance_bar(screen, distance)
 
         # Mode
@@ -279,6 +305,11 @@ def main():
         if distance < 15:
             draw_text("⚠ BRAKE WARNING!", 20,
                       WIDTH // 2 - 100, HEIGHT // 2 + 100, (255, 50, 50))
+            
+        # Low fuel warning
+        if fuel < 15:
+            draw_text("⛽ LOW FUEL!", 20,
+                    WIDTH // 2 - 90, HEIGHT // 2 + 140, (255, 80, 80))
 
         # RIGHT PANEL
         draw_text("RULES", 18, WIDTH - RIGHT_PANEL_WIDTH + 20, 20)
@@ -299,6 +330,26 @@ def main():
 
         draw_text(f"Active Rules: {active_rules}", 14,
                 WIDTH - RIGHT_PANEL_WIDTH + 20, active_rules_y)
+        
+        # =========================
+        # GRAPHS IN RIGHT PANEL
+        # =========================
+
+        graph_x = WIDTH - RIGHT_PANEL_WIDTH + 20
+        graph_y = active_rules_y + 40
+        graph_width = RIGHT_PANEL_WIDTH - 40
+
+        # 🔹 Speed Graph (small)
+        draw_text("Speed Trend", 12, graph_x, graph_y - 15)
+        dashboard.draw_speed_graph_small(
+            screen, graph_x, graph_y, graph_width
+        )
+
+        # 🔹 Fuel Graph (below speed)
+        draw_text("Fuel Trend", 12, graph_x, graph_y + 75)
+        dashboard.draw_fuel_graph_small(
+            screen, graph_x, graph_y + 90, graph_width, fuel_system.history
+        )
 
         pygame.display.flip()
 

@@ -12,6 +12,7 @@ class FuzzyCarController:
         self.road = ctrl.Antecedent(np.arange(0, 11, 1), 'road')
         self.light = ctrl.Antecedent(np.arange(0, 11, 1), 'light')
         self.speed = ctrl.Consequent(np.arange(0, 121, 1), 'speed')
+        self.limit = ctrl.Antecedent(np.arange(0, 121, 1), 'limit')
 
         # =========================
         # Membership Functions
@@ -37,12 +38,17 @@ class FuzzyCarController:
         self.speed['medium'] = fuzz.trimf(self.speed.universe, [30, 60, 90])
         self.speed['fast'] = fuzz.trimf(self.speed.universe, [70, 120, 120])
 
+        # Speed Limit Zones
+        self.limit['school'] = fuzz.trimf(self.limit.universe, [0, 40, 60])
+        self.limit['city'] = fuzz.trimf(self.limit.universe, [50, 70, 90])
+        self.limit['highway'] = fuzz.trimf(self.limit.universe, [80, 120, 120])
+
         # =========================
         # Rules (UPDATED)
         # =========================
         rules = [
 
-        # 🔴 RED LIGHT (Highest Priority)
+        #  RED LIGHT (Highest Priority)
         ctrl.Rule(self.light['red'] & self.distance['far'], self.speed['slow']),
         ctrl.Rule(self.light['red'] & self.distance['medium'], self.speed['slow']),
         ctrl.Rule(self.light['red'] & self.distance['close'], self.speed['slow']),
@@ -50,13 +56,13 @@ class FuzzyCarController:
         # Extra safety in wet
         ctrl.Rule(self.light['red'] & self.road['wet'], self.speed['slow']),
 
-        # 🟡 YELLOW LIGHT (Caution)
+        #  YELLOW LIGHT (Caution)
         ctrl.Rule(self.light['yellow'] & self.distance['close'], self.speed['slow']),
         ctrl.Rule(self.light['yellow'] & self.distance['medium'] & self.road['wet'], self.speed['slow']),
         ctrl.Rule(self.light['yellow'] & self.distance['medium'] & self.road['normal'], self.speed['medium']),
         ctrl.Rule(self.light['yellow'] & self.distance['far'] & self.road['dry'], self.speed['medium']),
 
-        # 🟢 GREEN LIGHT (Normal Driving)
+        #  GREEN LIGHT (Normal Driving)
         ctrl.Rule(self.light['green'] & self.distance['close'], self.speed['slow']),
 
         ctrl.Rule(self.light['green'] & self.distance['medium'] & self.road['wet'], self.speed['slow']),
@@ -67,7 +73,12 @@ class FuzzyCarController:
         ctrl.Rule(self.light['green'] & self.distance['far'] & self.road['normal'], self.speed['fast']),
         ctrl.Rule(self.light['green'] & self.distance['far'] & self.road['dry'], self.speed['fast']),
 
-        # 🌧 SAFETY OVERRIDES
+        #  SPEED LIMIT RULES
+        ctrl.Rule(self.limit['school'], self.speed['slow']),
+        ctrl.Rule(self.limit['city'] & self.distance['far'], self.speed['medium']),
+        ctrl.Rule(self.limit['highway'] & self.distance['far'] & self.road['dry'], self.speed['fast']),
+
+        #  SAFETY OVERRIDES
         ctrl.Rule(self.road['wet'] & self.distance['close'], self.speed['slow']),
         ctrl.Rule(self.road['wet'] & self.distance['medium'], self.speed['medium']),
 
@@ -79,7 +90,7 @@ class FuzzyCarController:
     # =========================
     # Compute Function (UPDATED)
     # =========================
-    def compute(self, distance_value, road_value, light_value):
+    def compute(self, distance_value, road_value, light_value, limit_value):
 
         # Reset simulation
         self.simulation = ctrl.ControlSystemSimulation(self.control_system)
@@ -87,6 +98,7 @@ class FuzzyCarController:
         self.simulation.input['distance'] = distance_value
         self.simulation.input['road'] = road_value
         self.simulation.input['light'] = light_value
+        self.simulation.input['limit'] = limit_value
 
         try:
             self.simulation.compute()
@@ -115,6 +127,12 @@ class FuzzyCarController:
             'red': fuzz.interp_membership(self.light.universe, self.light['red'].mf, light_value),
             'yellow': fuzz.interp_membership(self.light.universe, self.light['yellow'].mf, light_value),
             'green': fuzz.interp_membership(self.light.universe, self.light['green'].mf, light_value)
+        }
+
+        limit_mf = {
+            'school': fuzz.interp_membership(self.limit.universe, self.limit['school'].mf, limit_value),
+            'city': fuzz.interp_membership(self.limit.universe, self.limit['city'].mf, limit_value),
+            'highway': fuzz.interp_membership(self.limit.universe, self.limit['highway'].mf, limit_value)
         }
 
         # =========================
@@ -152,7 +170,7 @@ class FuzzyCarController:
 
         # DEFAULT
         rules_strength.append(distance_mf['medium'])
-        
+
         # =========================
         # Output MF activation
         # =========================
@@ -168,5 +186,6 @@ class FuzzyCarController:
             "road_mf": road_mf,
             "light_mf": light_mf,
             "rule_strengths": rules_strength,
-            "output_mf": output_mf
+            "output_mf": output_mf,
+            "limit_mf": limit_mf,
         }

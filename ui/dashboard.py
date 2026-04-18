@@ -61,3 +61,83 @@ class Dashboard:
         font = pygame.font.SysFont("Arial", 12)
         text = font.render(f"Distance: {int(distance)}", True, (200, 200, 200))
         screen.blit(text, (self.x, self.y + 120))
+
+    def draw_fuel_bar(self, screen, fuel):
+        x = self.x
+        y = self.y - 40
+
+        width = self.width
+        height = 10
+
+        # Background
+        pygame.draw.rect(screen, (60, 60, 60), (x, y, width, height))
+
+        # Fuel level
+        fill = (fuel / 100) * width
+
+        color = (50, 200, 100) if fuel > 40 else (255, 200, 50) if fuel > 15 else (255, 80, 80)
+
+        pygame.draw.rect(screen, color, (x, y, fill, height))
+
+        # Label
+        font = pygame.font.SysFont("Arial", 12)
+        text = font.render(f"Fuel: {int(fuel)}%", True, (255, 255, 255))
+        screen.blit(text, (x, y - 18))
+
+
+    def draw_fuel_graph(self, screen, fuel_history):
+        if len(fuel_history) < 2:
+            return
+
+        graph_x = self.x
+        graph_y = self.y - 100
+        graph_w = self.width
+        graph_h = 50
+
+        # Border
+        pygame.draw.rect(screen, (80, 80, 80), (graph_x, graph_y, graph_w, graph_h), 1)
+
+        # Draw line
+        points = []
+        for i, value in enumerate(fuel_history):
+            px = graph_x + (i / len(fuel_history)) * graph_w
+            py = graph_y + graph_h - (value / 100) * graph_h
+            points.append((px, py))
+
+        if len(points) > 1:
+            pygame.draw.lines(screen, (0, 200, 255), False, points, 2)
+
+    def draw_speed_graph_small(self, screen, x, y, width):
+        if len(self.speed_history) < 2:
+            return
+
+        height = 60
+
+        pygame.draw.rect(screen, (80, 80, 80), (x, y, width, height), 1)
+
+        points = []
+        for i, value in enumerate(self.speed_history):
+            px = x + (i / len(self.speed_history)) * width
+            py = y + height - (value / 120) * height
+            points.append((px, py))
+
+        if len(points) > 1:
+            pygame.draw.lines(screen, (0, 200, 255), False, points, 2)
+
+
+    def draw_fuel_graph_small(self, screen, x, y, width, history):
+        if len(history) < 2:
+            return
+
+        height = 60
+
+        pygame.draw.rect(screen, (80, 80, 80), (x, y, width, height), 1)
+
+        points = []
+        for i, value in enumerate(history):
+            px = x + (i / len(history)) * width
+            py = y + height - (value / 100) * height
+            points.append((px, py))
+
+        if len(points) > 1:
+            pygame.draw.lines(screen, (255, 200, 0), False, points, 2)
