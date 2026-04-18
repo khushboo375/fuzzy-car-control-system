@@ -205,15 +205,6 @@ config.py
 
 ---
 
-##  Future Improvements
-
-* Add AI-based learning (adaptive rules)
-* Add obstacle detection
-* Improve physics realism
-* Add lane changing logic
-
----
-
 ##  Conclusion
 
 This project demonstrates how fuzzy logic can be used to build intelligent, adaptive systems that behave more like humans. It highlights the importance of handling uncertainty in real-world decision-making.
